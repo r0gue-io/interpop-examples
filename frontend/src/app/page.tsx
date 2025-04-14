@@ -6,6 +6,7 @@ import { useInkathon } from '@scio-labs/use-inkathon'
 import { toast } from 'react-hot-toast'
 
 import { HomePageTitle } from '@/app/components/home-page-title'
+import { AnimatedBackground } from '@/components/ui/animated-background'
 import { ChainInfo } from '@/components/web3/chain-info'
 import { ConnectButton } from '@/components/web3/connect-button'
 import { SwapContractInteractions } from '@/components/web3/swap-contract-interactions'
@@ -21,6 +22,8 @@ export default function HomePage() {
   return (
     <>
       <div className="container relative flex grow flex-col items-center justify-center py-10">
+        <AnimatedBackground />
+
         {/* Title */}
         <HomePageTitle />
 

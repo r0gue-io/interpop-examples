@@ -23,6 +23,7 @@
     "@inkathon/contracts": "workspace:*",
     "@polkadot/api": "12",
     "@polkadot/api-contract": "12",
+    "@polkadot/apps-config": "^0.153.1",
     "@polkadot/extension-dapp": "^0.57.1",
     "@polkadot/extension-inject": "^0.57.1",
     "@polkadot/keyring": "12",

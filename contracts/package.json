@@ -18,7 +18,9 @@
     "lint": "prettier . --check && eslint .",
     "lint:fix": "prettier . --write && eslint . --fix",
     "lint:format": "prettier . --write",
-    "gen:types": "dedot typink -m ./deployments/swap/swap.json -o ./generated-types"
+    "gen:types": "dedot typink -m ./deployments/swap/swap.json -o ./generated-types",
+    "gen:assethub": "dedot chaintypes -w wss://sys.ibp.network/asset-hub-paseo -o ./generated-types/chains",
+    "gen:hydration": "dedot chaintypes -w wss://paseo-rpc.play.hydration.cloud -o ./generated-types/chains"
   },
   "devDependencies": {
     "@727-ventures/typechain-types": "^1.1.2",

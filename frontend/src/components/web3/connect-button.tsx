@@ -31,12 +31,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { env } from '@/config/environment'
-import {
-  PASEO_ASSET_HUB_RPC,
-  PASEO_HYDRATION_RPC,
-  PASEO_POP_RPC,
-} from '@/config/get-supported-chains'
-import { useBalance } from '@/hooks/useBalance'
+import { useAccount } from '@/hooks/useAccount'
 import { truncateHash } from '@/utils/truncate-hash'
 
 import { Spinner } from '../ui/spinner'
@@ -53,21 +48,7 @@ export const ConnectButton: FC<ConnectButtonProps> = () => {
     accounts,
     setActiveAccount,
   } = useInkathon()
-  const popBalanceData = useBalance(PASEO_POP_RPC, activeAccount?.address, true, {
-    forceUnit: false,
-    fixedDecimals: 4,
-    removeTrailingZeros: true,
-  })
-  const hydrationBalanceData = useBalance(PASEO_HYDRATION_RPC, activeAccount?.address, true, {
-    forceUnit: false,
-    fixedDecimals: 4,
-    removeTrailingZeros: true,
-  })
-  const assetHubBalanceData = useBalance(PASEO_ASSET_HUB_RPC, activeAccount?.address, true, {
-    forceUnit: false,
-    fixedDecimals: 4,
-    removeTrailingZeros: true,
-  })
+  const { popAccountBalance, assetHubAccountBalance, hydrationAccountBalance } = useAccount()
 
   const [supportedChains] = useState(
     env.supportedChains.map((networkId) => getSubstrateChain(networkId) as SubstrateChain),
@@ -217,15 +198,15 @@ export const ConnectButton: FC<ConnectButtonProps> = () => {
       {/* Account Balance */}
       {[
         [
-          { data: popBalanceData, name: '🍭 Pop Testnet' },
-          { data: assetHubBalanceData, name: '🏦 Asset Hub' },
-          { data: hydrationBalanceData, name: '🧃 Hydration' },
+          { data: popAccountBalance, name: '🍭 Pop Testnet' },
+          { data: assetHubAccountBalance, name: '🏦 Asset Hub' },
+          { data: hydrationAccountBalance, name: '🧃 Hydration' },
         ].map((balanceData) => (
           <div key={balanceData.name}>
             <div
               className={`flex min-w-[10rem] items-center justify-center gap-2 rounded-2xl border bg-gray-900 px-4 py-3 font-mono text-sm font-bold text-foreground`}
             >
-              {balanceData.data.reducibleBalanceFormatted !== undefined ? (
+              {balanceData.data && balanceData.data.reducibleBalanceFormatted !== undefined ? (
                 <React.Fragment>
                   {balanceData.name}: {balanceData.data.reducibleBalanceFormatted}
                   {(!balanceData.data.reducibleBalance ||

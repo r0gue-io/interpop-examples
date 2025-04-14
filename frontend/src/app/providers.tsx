@@ -6,6 +6,7 @@ import { getDeployments } from '@/deployments/deployments'
 import { UseInkathonProvider } from '@scio-labs/use-inkathon'
 
 import { env } from '@/config/environment'
+import { AccountProvider } from '@/hooks/useAccount'
 
 export default function ClientProviders({ children }: PropsWithChildren) {
   return (
@@ -15,7 +16,7 @@ export default function ClientProviders({ children }: PropsWithChildren) {
       defaultChain={env.defaultChain}
       deployments={getDeployments()}
     >
-      {children}
+      <AccountProvider>{children}</AccountProvider>
     </UseInkathonProvider>
   )
 }

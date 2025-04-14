@@ -17,8 +17,6 @@ import { Input } from '@/components/ui/input'
 
 const formSchema = z.object({
   amountOut: z.number().min(1).max(10000000),
-  maxAmountIn: z.number().min(1).max(1000000000000000),
-  feeAmount: z.number().min(1).max(1000000000000000),
   destinationParachain: z.number(),
   destinationBeneficiary: z.string(),
   sentPaseo: z.number(),
@@ -35,8 +33,6 @@ export const SwapContractInteractions: FC = () => {
 
   const swapHandler: SubmitHandler<z.infer<typeof formSchema>> = async ({
     amountOut,
-    maxAmountIn,
-    feeAmount,
     destinationBeneficiary,
     destinationParachain,
     sentPaseo,
@@ -49,8 +45,8 @@ export const SwapContractInteractions: FC = () => {
     const tx = await swapUsdtOnHydrationTx(
       activeSigner,
       amountOut,
-      maxAmountIn,
-      feeAmount,
+      1_000_000_0000_000_000,
+      3_000_000_000,
       {
         type: 'ParachainAccount',
         value: [destinationParachain, destinationBeneficiary],
@@ -90,40 +86,48 @@ export const SwapContractInteractions: FC = () => {
                   <FormLabel className="text-base">Swap USDT on Hydration</FormLabel>
                   <FormControl>
                     <div className="flex flex-col gap-2">
-                      <Input
-                        type="number"
-                        placeholder="Amount of PASEO to send"
-                        disabled={form.formState.isSubmitting}
-                        {...register('sentPaseo')}
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Enter the total amount of USDT swapped (e.g. 1000000)"
-                        disabled={form.formState.isSubmitting}
-                        {...register('amountOut')}
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Enter the max number of PAS consumed (e.g. 100000000000)"
-                        disabled={form.formState.isSubmitting}
-                        {...register('maxAmountIn')}
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Enter the swap fee amount (e.g. 3000000000)"
-                        disabled={form.formState.isSubmitting}
-                        {...register('feeAmount')}
-                      />
+                      <h3 className="mt-2 text-xs">Amount of PAS</h3>
+                      <div className="flex-center flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={0}
+                          placeholder="Enter the amount of PAS to send"
+                          disabled={form.formState.isSubmitting}
+                          {...register('sentPaseo')}
+                        />
+                        <Button variant={'secondary'} size={'sm'}>
+                          Max
+                        </Button>
+                      </div>
+                      <h3 className="mt-2 text-xs">Amount of USDT</h3>
+                      <div className="flex-center flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={0}
+                          placeholder="Enter the total amount of USDT swapped (e.g. 1000000)"
+                          disabled={form.formState.isSubmitting}
+                          {...register('amountOut')}
+                        />
+                      </div>
+                      <h3 className="mt-2 text-xs">Destination Parachain</h3>
                       <Input
                         placeholder="Enter the destination parachain"
+                        type="number"
+                        min={1000}
                         disabled={form.formState.isSubmitting}
                         {...register('destinationParachain')}
                       />
-                      <Input
-                        placeholder="Enter the destination beneficiary"
-                        disabled={form.formState.isSubmitting}
-                        {...register('destinationBeneficiary')}
-                      />
+                      <h3 className="mt-2 text-xs">Beneficiary</h3>
+                      <div className="flex-center flex items-center gap-2">
+                        <Input
+                          placeholder="Enter the destination beneficiary"
+                          disabled={form.formState.isSubmitting}
+                          {...register('destinationBeneficiary')}
+                        />
+                        <Button variant={'secondary'} size={'sm'}>
+                          Current Wallet
+                        </Button>
+                      </div>
                       <Button
                         type="submit"
                         className="bg-primary font-bold"

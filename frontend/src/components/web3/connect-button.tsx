@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { FC, useMemo, useState } from 'react'
+import React, { FC, useMemo, useState } from 'react'
 
 import { SupportedChainId } from '@azns/resolver-core'
 import { useResolveAddressToDomain } from '@azns/resolver-react'
@@ -16,7 +16,7 @@ import {
   isWalletInstalled,
   useInkathon,
 } from '@scio-labs/use-inkathon'
-import { AlertOctagon } from 'lucide-react'
+import { AlertOctagon, Wallet } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { AiOutlineCheckCircle, AiOutlineDisconnect } from 'react-icons/ai'
 import { FiChevronDown, FiExternalLink } from 'react-icons/fi'
@@ -38,6 +38,8 @@ import {
 } from '@/config/get-supported-chains'
 import { useBalance } from '@/hooks/useBalance'
 import { truncateHash } from '@/utils/truncate-hash'
+
+import { Spinner } from '../ui/spinner'
 
 export interface ConnectButtonProps {}
 export const ConnectButton: FC<ConnectButtonProps> = () => {
@@ -220,22 +222,26 @@ export const ConnectButton: FC<ConnectButtonProps> = () => {
           { data: hydrationBalanceData, name: '🧃 Hydration' },
         ].map((balanceData) => (
           <div key={balanceData.name}>
-            {balanceData.data.reducibleBalanceFormatted !== undefined && (
-              <div
-                className={`flex min-w-[10rem] items-center justify-center gap-2 rounded-2xl border bg-gray-900 px-4 py-3 font-mono text-sm font-bold text-foreground`}
-              >
-                {balanceData.name}: {balanceData.data.reducibleBalanceFormatted}
-                {(!balanceData.data.reducibleBalance ||
-                  balanceData.data.reducibleBalance?.isZero()) && (
-                  <Tooltip>
-                    <TooltipTrigger className="cursor-help">
-                      <AlertOctagon size={16} className="text-warning" />
-                    </TooltipTrigger>
-                    <TooltipContent>No balance to pay fees</TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
-            )}
+            <div
+              className={`flex min-w-[10rem] items-center justify-center gap-2 rounded-2xl border bg-gray-900 px-4 py-3 font-mono text-sm font-bold text-foreground`}
+            >
+              {balanceData.data.reducibleBalanceFormatted !== undefined ? (
+                <React.Fragment>
+                  {balanceData.name}: {balanceData.data.reducibleBalanceFormatted}
+                  {(!balanceData.data.reducibleBalance ||
+                    balanceData.data.reducibleBalance?.isZero()) && (
+                    <Tooltip>
+                      <TooltipTrigger className="cursor-help">
+                        <AlertOctagon size={16} className="text-warning" />
+                      </TooltipTrigger>
+                      <TooltipContent>No balance to pay fees</TooltipContent>
+                    </Tooltip>
+                  )}
+                </React.Fragment>
+              ) : (
+                <Spinner />
+              )}
+            </div>
           </div>
         )),
       ]}
@@ -259,7 +265,7 @@ export const AccountName: FC<AccountNameProps> = ({ account, ...rest }) => {
 
   return (
     <div className="flex items-center gap-2 font-mono text-sm font-bold uppercase" {...rest}>
-      {primaryDomain || account.name}
+      <Wallet size={10} /> {primaryDomain || account.name}
     </div>
   )
 }

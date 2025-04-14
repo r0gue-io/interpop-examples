@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { FC, useMemo, useState } from 'react'
 
@@ -8,17 +7,16 @@ import { SupportedChainId } from '@azns/resolver-core'
 import { useResolveAddressToDomain } from '@azns/resolver-react'
 import { InjectedAccount } from '@polkadot/extension-inject/types'
 import { encodeAddress } from '@polkadot/util-crypto'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@radix-ui/react-tooltip'
 import {
   SubstrateChain,
   SubstrateWalletPlatform,
   allSubstrateWallets,
   getSubstrateChain,
   isWalletInstalled,
-  useBalance,
   useInkathon,
 } from '@scio-labs/use-inkathon'
 import { AlertOctagon } from 'lucide-react'
-import aznsIconSvg from 'public/icons/azns-icon.svg'
 import toast from 'react-hot-toast'
 import { AiOutlineCheckCircle, AiOutlineDisconnect } from 'react-icons/ai'
 import { FiChevronDown, FiExternalLink } from 'react-icons/fi'
@@ -33,9 +31,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { env } from '@/config/environment'
+import {
+  PASEO_ASSET_HUB_RPC,
+  PASEO_HYDRATION_RPC,
+  PASEO_POP_RPC,
+} from '@/config/get-supported-chains'
+import { useBalance } from '@/hooks/useBalance'
 import { truncateHash } from '@/utils/truncate-hash'
-
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 
 export interface ConnectButtonProps {}
 export const ConnectButton: FC<ConnectButtonProps> = () => {
@@ -49,11 +51,22 @@ export const ConnectButton: FC<ConnectButtonProps> = () => {
     accounts,
     setActiveAccount,
   } = useInkathon()
-  const { reducibleBalance, reducibleBalanceFormatted } = useBalance(activeAccount?.address, true, {
+  const popBalanceData = useBalance(PASEO_POP_RPC, activeAccount?.address, true, {
     forceUnit: false,
-    fixedDecimals: 2,
+    fixedDecimals: 4,
     removeTrailingZeros: true,
   })
+  const hydrationBalanceData = useBalance(PASEO_HYDRATION_RPC, activeAccount?.address, true, {
+    forceUnit: false,
+    fixedDecimals: 4,
+    removeTrailingZeros: true,
+  })
+  const assetHubBalanceData = useBalance(PASEO_ASSET_HUB_RPC, activeAccount?.address, true, {
+    forceUnit: false,
+    fixedDecimals: 4,
+    removeTrailingZeros: true,
+  })
+
   const [supportedChains] = useState(
     env.supportedChains.map((networkId) => getSubstrateChain(networkId) as SubstrateChain),
   )
@@ -200,19 +213,32 @@ export const ConnectButton: FC<ConnectButtonProps> = () => {
       </DropdownMenu>
 
       {/* Account Balance */}
-      {reducibleBalanceFormatted !== undefined && (
-        <div className="flex min-w-[10rem] items-center justify-center gap-2 rounded-2xl border bg-gray-900 px-4 py-3 font-mono text-sm font-bold text-foreground">
-          {reducibleBalanceFormatted}
-          {(!reducibleBalance || reducibleBalance?.isZero()) && (
-            <Tooltip>
-              <TooltipTrigger className="cursor-help">
-                <AlertOctagon size={16} className="text-warning" />
-              </TooltipTrigger>
-              <TooltipContent>No balance to pay fees</TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-      )}
+      {[
+        [
+          { data: popBalanceData, name: '🍭 Pop Testnet' },
+          { data: assetHubBalanceData, name: '🏦 Asset Hub' },
+          { data: hydrationBalanceData, name: '🧃 Hydration' },
+        ].map((balanceData) => (
+          <div key={balanceData.name}>
+            {balanceData.data.reducibleBalanceFormatted !== undefined && (
+              <div
+                className={`flex min-w-[10rem] items-center justify-center gap-2 rounded-2xl border bg-gray-900 px-4 py-3 font-mono text-sm font-bold text-foreground`}
+              >
+                {balanceData.name}: {balanceData.data.reducibleBalanceFormatted}
+                {(!balanceData.data.reducibleBalance ||
+                  balanceData.data.reducibleBalance?.isZero()) && (
+                  <Tooltip>
+                    <TooltipTrigger className="cursor-help">
+                      <AlertOctagon size={16} className="text-warning" />
+                    </TooltipTrigger>
+                    <TooltipContent>No balance to pay fees</TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+            )}
+          </div>
+        )),
+      ]}
     </div>
   )
 }
@@ -234,7 +260,6 @@ export const AccountName: FC<AccountNameProps> = ({ account, ...rest }) => {
   return (
     <div className="flex items-center gap-2 font-mono text-sm font-bold uppercase" {...rest}>
       {primaryDomain || account.name}
-      {!!primaryDomain && <Image src={aznsIconSvg} alt="AZERO.ID Logo" width={13} height={13} />}
     </div>
   )
 }

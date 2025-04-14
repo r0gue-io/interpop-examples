@@ -8,7 +8,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-000000?logo=typescript&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-000000?logo=next.js&logoColor=white)
 
-This is a full-stack dApp boilerplate for ink! smart contracts with an integrated frontend. It can be used to quickly start developing your hackathon idea or to scaffold a production-ready Web3 application.
+This is a InterPop Cross-chain ink! Swap Contract with an integrated frontend. It can be used to quickly start developing your hackathon idea or to scaffold a production-ready Web3 application.
 
 The project is part of a [Scio Labs](https://scio.xyz) initiative to improve the developer experience in the ink! ecosystem and a proud member of the [Aleph Zero EFP](https://alephzero.org/ecosystem-funding-program). 💜
 

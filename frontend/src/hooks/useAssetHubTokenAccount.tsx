@@ -4,10 +4,8 @@ import {
   AssetHubPaseoApi,
   PalletAssetsAssetMetadata,
 } from '@inkathon/contracts/generated-types/chains/asset-hub-paseo'
-import { formatBalance } from '@polkadot/util'
 import { DedotClient, WsProvider } from 'dedot'
 import { PalletAssetsAssetAccount } from 'dedot/chaintypes'
-import { toast } from 'react-hot-toast'
 
 import { PASEO_ASSET_HUB_RPC } from '@/config/get-supported-chains'
 
@@ -26,12 +24,6 @@ export const useAssetHubTokenAccount = (assetId: number, address: string | undef
         setMeadata(metatadataData)
         await client.query.assets.account([assetId, address], (d) => {
           if (d) {
-            toast.success(
-              `Asset ${assetId} balance updated. New balance: ${formatBalance(d.balance, {
-                decimals: metatadataData.decimals,
-                withZero: false,
-              })}`,
-            )
             setAccount(d)
           }
         })

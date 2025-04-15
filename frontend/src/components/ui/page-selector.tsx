@@ -8,7 +8,8 @@ import {
 } from '@radix-ui/react-dropdown-menu'
 import { RiArrowDownSLine } from 'react-icons/ri'
 
-import { EXAMPLES, useAccount } from '@/hooks/useAccount'
+import { EXAMPLES } from '@/config/examples'
+import { useAccount } from '@/hooks/useAccount'
 
 import { Button } from './button'
 

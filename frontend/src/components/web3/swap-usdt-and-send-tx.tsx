@@ -1,22 +1,22 @@
 'use client'
 
-import React, { FC, useState } from 'react'
+import { FC, useState } from 'react'
 
 import { ContractIds } from '@/deployments/deployments'
 import { testParasPaseo, testParasPaseoCommon } from '@polkadot/apps-config'
 import { EndpointOption } from '@polkadot/apps-config/endpoints/types'
-import { formatBalance } from '@polkadot/util'
 import { useInkathon, useRegisteredContract } from '@scio-labs/use-inkathon'
 import { WalletIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { TxUiStatus, useTransaction } from '@/hooks/useTransaction'
+import { TxUiStatus, useHydrationSAOnAssetHub, useTransaction } from '@/hooks/useTransaction'
 
+import { AssetHubAssetList } from '../ui/assethub-asset-list'
 import ChainSelector from '../ui/chain-selector'
 
-export const SwapAndSendTxInteractions: FC = () => {
+export const SwapUsdtAndSendTxInteractions: FC = () => {
   const [amountOut, setAmountOut] = useState<number | undefined>(0)
   const [destinationBeneficiary, setDestinationBeneficiary] = useState<string | undefined>(
     undefined,
@@ -26,6 +26,7 @@ export const SwapAndSendTxInteractions: FC = () => {
   const { api, activeAccount } = useInkathon()
   const { contract, address: contractAddress } = useRegisteredContract(ContractIds.Swap)
   const { handleSwap, assetHubUsdt, status } = useTransaction()
+  const hydrationSovereign = useHydrationSAOnAssetHub()
 
   if (!api) return null
 
@@ -37,27 +38,24 @@ export const SwapAndSendTxInteractions: FC = () => {
         </h2>
         <Card>
           <CardContent className="pt-6">
-            <h1 className="text-base font-bold">Balance</h1>
-            <div className="flex gap-3">
-              {[{ asset: assetHubUsdt, symbol: 'USDT on Hydration' }].map(({ asset, symbol }) => (
-                <div key={asset.metadata?.symbol}>
-                  <div className="flex-center mt-2 flex items-center gap-2">
-                    <Button variant={'secondary'} isLoading={!assetHubUsdt.account} size={'sm'}>
-                      {asset.metadata && (
-                        <React.Fragment>
-                          <h3 className="text-md mr-2">{symbol}</h3>
-                          <div className="font-bold text-purple-300">
-                            {formatBalance(asset.account?.balance || 0, {
-                              decimals: asset.metadata.decimals,
-                            })}
-                          </div>
-                        </React.Fragment>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <h1 className="text-base font-bold">Wallet Balance</h1>
+            <AssetHubAssetList assets={[{ asset: assetHubUsdt, symbol: 'USDT on Hydration' }]} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <h1 className="text-base font-bold">Hydration Sovereign Account Balance</h1>
+            <p className="mt-3 text-gray-400">
+              The sovereign account must have sufficient balance on the destination parachain.
+            </p>
+            <AssetHubAssetList
+              assets={[
+                {
+                  asset: hydrationSovereign.sovereignUsdt,
+                  symbol: 'USDT on Asset Hub',
+                },
+              ]}
+            />
           </CardContent>
         </Card>
         <Card>

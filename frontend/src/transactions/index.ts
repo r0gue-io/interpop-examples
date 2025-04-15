@@ -11,6 +11,16 @@ import { RuntimeApiSpec } from 'dedot/types'
 
 import { PASEO_POP_RPC } from '@/config/get-supported-chains'
 
+const createPopTestnetApi = async () => {
+  const provider = new WsProvider(PASEO_POP_RPC)
+  const api = await DedotClient.new<any>({
+    provider,
+    cacheMetadata: true,
+    runtimeApis: { ContractsApi, TaggedTransactionQueue, TransactionPaymentApi, AccountNonceApi },
+  })
+  return api
+}
+
 export const ContractsApi: RuntimeApiSpec[] = [
   {
     methods: {
@@ -25,6 +35,51 @@ export const ContractsApi: RuntimeApiSpec[] = [
   },
 ]
 
+export const fundParachainDirect = async (
+  signer: any,
+  fromPara: number,
+  toPara: number,
+  beneficiary: string,
+  hashed: boolean,
+  refTime: number,
+  proofSize: number,
+  sentPaseo: number,
+) => {
+  const api = await createPopTestnetApi()
+  api.setSigner(signer)
+  const contract = new Contract<HydraSwapContractApi>(api, swapMetadata as any, address)
+  return contract.tx.fundDirect(beneficiary, fromPara, toPara, hashed, {
+    gasLimit: {
+      refTime: BigInt(refTime),
+      proofSize: BigInt(proofSize),
+    },
+    value: BigInt(sentPaseo),
+  })
+}
+
+export const fundParachainIndirect = async (
+  signer: any,
+  fromPara: number,
+  intemediaryHop: number,
+  toPara: number,
+  beneficiary: string,
+  hashed: boolean,
+  refTime: number,
+  proofSize: number,
+  sentPaseo: number,
+) => {
+  const api = await createPopTestnetApi()
+  api.setSigner(signer)
+  const contract = new Contract<HydraSwapContractApi>(api, swapMetadata as any, address)
+  return contract.tx.fundIndirect(beneficiary, fromPara, intemediaryHop, toPara, hashed, {
+    gasLimit: {
+      refTime: BigInt(refTime),
+      proofSize: BigInt(proofSize),
+    },
+    value: BigInt(sentPaseo),
+  })
+}
+
 export const swapUsdtOnHydrationTx = async (
   signer: any,
   amountOut: number,
@@ -35,12 +90,7 @@ export const swapUsdtOnHydrationTx = async (
   proofSize: number,
   sentPaseo: number,
 ) => {
-  const provider = new WsProvider(PASEO_POP_RPC)
-  const api = await DedotClient.new<any>({
-    provider,
-    cacheMetadata: true,
-    runtimeApis: { ContractsApi, TaggedTransactionQueue, TransactionPaymentApi, AccountNonceApi },
-  })
+  const api = await createPopTestnetApi()
   api.setSigner(signer)
   const contract = new Contract<HydraSwapContractApi>(api, swapMetadata as any, address)
   return contract.tx.swapUsdtOnHydra(

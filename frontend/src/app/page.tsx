@@ -13,6 +13,7 @@ import { ConnectButton } from '@/components/web3/connect-button'
 
 export default function HomePage() {
   // Display `useInkathon` error messages (optional)
+  const { api } = useInkathon()
   const { error } = useInkathon()
   useEffect(() => {
     if (!error) return
@@ -30,15 +31,17 @@ export default function HomePage() {
         {/* Connect Wallet Button */}
         <ConnectButton />
 
-        <div className="mt-12 flex w-full flex-wrap items-start justify-center gap-4">
-          {/* Chain Metadata Information */}
-          <ChainInfo />
+        {api && (
+          <div className="mt-12 flex w-full flex-wrap items-start justify-center gap-4">
+            {/* Chain Metadata Information */}
+            <ChainInfo />
 
-          <div>
-            <PageSelector />
-            <br />
+            <div>
+              <PageSelector />
+              <br />
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </>
   )

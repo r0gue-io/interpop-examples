@@ -2,8 +2,7 @@ import React, { useContext, useState } from 'react'
 
 import { BalanceData, useInkathon } from '@scio-labs/use-inkathon'
 
-import { SwapAndDepositTxInteractions } from '@/components/web3/swap-and-deposit-tx'
-import { SwapAndSendTxInteractions } from '@/components/web3/swap-and-send-tx'
+import { EXAMPLES } from '@/config/examples'
 import {
   PASEO_ASSET_HUB_RPC,
   PASEO_HYDRATION_RPC,
@@ -11,19 +10,6 @@ import {
 } from '@/config/get-supported-chains'
 
 import { useBalance } from './useBalance'
-
-export const EXAMPLES = [
-  {
-    key: 'swap-and-send-to-parachain',
-    name: 'Swap and send to parachain',
-    page: <SwapAndSendTxInteractions />,
-  },
-  {
-    key: 'swap-and-deposit-to-local-account',
-    name: 'Swap and deposit to local account',
-    page: <SwapAndDepositTxInteractions />,
-  },
-]
 
 const AccountContext = React.createContext<
   Partial<{

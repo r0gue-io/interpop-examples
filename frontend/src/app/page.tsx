@@ -7,9 +7,9 @@ import { toast } from 'react-hot-toast'
 
 import { HomePageTitle } from '@/app/components/home-page-title'
 import { AnimatedBackground } from '@/components/ui/animated-background'
+import { PageSelector } from '@/components/ui/page-selector'
 import { ChainInfo } from '@/components/web3/chain-info'
 import { ConnectButton } from '@/components/web3/connect-button'
-import { SwapContractInteractions } from '@/components/web3/swap-contract-interactions'
 
 export default function HomePage() {
   // Display `useInkathon` error messages (optional)
@@ -34,7 +34,10 @@ export default function HomePage() {
           {/* Chain Metadata Information */}
           <ChainInfo />
 
-          <SwapContractInteractions />
+          <div>
+            <PageSelector />
+            <br />
+          </div>
         </div>
       </div>
     </>

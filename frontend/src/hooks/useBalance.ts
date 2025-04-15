@@ -51,3 +51,12 @@ export const useBalance = (
 
   return balanceData
 }
+
+export const fetchNativeToken = async (wss: string) => {
+  const provider = new WsProvider(wss)
+  const api = await ApiPromise.create({ provider })
+  const properties = ((await api.rpc.system.properties())?.toHuman() as any) || {}
+  const symbol = properties?.tokenSymbol?.[0] || 'UNIT'
+  const decimals = properties?.tokenDecimals?.[0] || 12
+  return { symbol, decimals }
+}

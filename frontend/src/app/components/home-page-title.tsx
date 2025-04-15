@@ -25,7 +25,7 @@ const StyledIconLink: React.FC<StyledIconLinkProps> = ({ className, children, ..
 )
 
 export const HomePageTitle: FC = () => {
-  const title = 'InterPop Cross-chain Swap Demo'
+  const title = 'InterPop ink! Examples'
   const desc = 'Demo for ink! contract built with Pop API to swap on Hydration.'
   const githubHref = 'https://github.com/r0gue-io/project-interpop'
   const telegramHref = 'https://t.me/inkathon'

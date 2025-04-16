@@ -21,7 +21,7 @@ export const SwapUsdtAndDepositTxInteractions: FC = () => {
   const [sentPaseo, setSentPaseo] = useState<number | undefined>(0)
   const { api, activeAccount } = useInkathon()
   const { contract, address: contractAddress } = useRegisteredContract(ContractIds.Swap)
-  const { handleSwap, assetHubUsdt, status } = useTransaction()
+  const { handleSwapPAStoUSDT, assetHubUsdt, status } = useTransaction()
 
   if (!api) return null
 
@@ -80,7 +80,7 @@ export const SwapUsdtAndDepositTxInteractions: FC = () => {
               <Button
                 type="submit"
                 onClick={() =>
-                  handleSwap(amountOut, sentPaseo, {
+                  handleSwapPAStoUSDT(amountOut, sentPaseo, {
                     type: 'Account',
                     value: destinationBeneficiary || '',
                   })

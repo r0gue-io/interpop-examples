@@ -1,7 +1,12 @@
 import { useState } from 'react'
 
 import { ContractIds } from '@/deployments/deployments'
-import { fundParachainDirect, fundParachainIndirect, swapUsdtOnHydrationTx } from '@/transactions'
+import {
+  fundParachainDirect,
+  fundParachainIndirect,
+  swapAnyOnHydrationTx,
+  swapUsdtOnHydrationTx,
+} from '@/transactions'
 import { HydraSwapXcmDepositedLocationLike } from '@inkathon/contracts/generated-types/hydra-swap'
 import { useInkathon, useRegisteredContract } from '@scio-labs/use-inkathon'
 import { TxStatus } from 'dedot/types'
@@ -18,17 +23,18 @@ const POP_SA = '5Eg2fnt8cGL5CBhRRhi59abAwb3SPoAdPJpN9qY7bQqpzpf6'
 
 export enum TxUiStatus {
   Submitting = 'Submitting',
+  Fetching = 'Fetching',
   Idle = 'Idle',
 }
 
 export const useHydrationSAOnAssetHub = () => {
-  const sovereignUsdt = useAssetHubTokenAccount(USDT, HYDRATION_SA)
+  const sovereignUsdt = useAssetHubTokenAccount(PASEO_ASSET_HUB_RPC, USDT, HYDRATION_SA)
   const sovereignPASOnAssetHub = useBalance(PASEO_ASSET_HUB_RPC, HYDRATION_SA, true, {
     forceUnit: false,
     fixedDecimals: 4,
     removeTrailingZeros: true,
   })
-  return { sovereignPASOnAssetHub, sovereignUsdt }
+  return { sovereignPASOnAssetHub, sovereignUsdt, address: HYDRATION_SA }
 }
 
 export const usePopSAOnAssetHub = () => {
@@ -44,13 +50,13 @@ export const useTransaction = () => {
   const [status, setStatus] = useState<TxUiStatus>(TxUiStatus.Idle)
   const { activeAccount, activeSigner, api } = useInkathon()
   const { contract } = useRegisteredContract(ContractIds.Swap)
-  const assetHubUsdt = useAssetHubTokenAccount(USDT, activeAccount?.address)
+  const assetHubUsdt = useAssetHubTokenAccount(PASEO_ASSET_HUB_RPC, USDT, activeAccount?.address)
 
   const handleTransactionStatus = (status: TxStatus) => {
     console.log('Transaction status', status.type)
     if (status.type === 'Broadcasting') {
       toast.loading(`Broadcasting transaction...`, {
-        duration: 4000,
+        duration: 5000,
       })
       return true
     }
@@ -66,7 +72,7 @@ export const useTransaction = () => {
     }
   }
 
-  const handleSwap = async (
+  const handleSwapPAStoUSDT = async (
     amountOut: number | undefined,
     sentPaseo: number | undefined,
     dest: HydraSwapXcmDepositedLocationLike | undefined,
@@ -83,6 +89,44 @@ export const useTransaction = () => {
     const nativeToken = await fetchNativeToken(PASEO_POP_RPC)
     const tx = await swapUsdtOnHydrationTx(
       activeSigner,
+      amountOut * 10 ** (assetHubUsdt.metadata?.decimals || 0),
+      1_000_000_0000_000_000,
+      3_000_000_000,
+      dest,
+      90_000_000_000,
+      900_000,
+      sentPaseo * 10 ** nativeToken.decimals,
+    )
+    await tx.signAndSend(activeAccount.address, async ({ status }) => {
+      handleTransactionStatus(status)
+    })
+  }
+
+  const handleSwapAny = async (
+    fromPara: number | undefined,
+    toPara: number | undefined,
+    giveAssetId: number | undefined,
+    wantAssetId: number | undefined,
+    amountOut: number | undefined,
+    sentPaseo: number | undefined,
+    dest: HydraSwapXcmDepositedLocationLike | undefined,
+  ) => {
+    setStatus(TxUiStatus.Submitting)
+    if (!amountOut || !sentPaseo || !dest || !fromPara || !toPara || !giveAssetId || !wantAssetId) {
+      toast.error('Missing required fields')
+      return
+    }
+    if (!activeAccount || !contract || !activeSigner || !api) {
+      toast.error('Wallet not connected. Try again…')
+      return
+    }
+    const nativeToken = await fetchNativeToken(PASEO_POP_RPC)
+    const tx = await swapAnyOnHydrationTx(
+      activeSigner,
+      fromPara,
+      toPara,
+      giveAssetId,
+      wantAssetId,
       amountOut * 10 ** (assetHubUsdt.metadata?.decimals || 0),
       1_000_000_0000_000_000,
       3_000_000_000,
@@ -163,7 +207,8 @@ export const useTransaction = () => {
   }
 
   return {
-    handleSwap,
+    handleSwapPAStoUSDT,
+    handleSwapAny,
     handleDirectReserveTransferParachain,
     handleIndirectReserveTransferParachain,
     assetHubUsdt,

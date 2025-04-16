@@ -1,6 +1,6 @@
 'use client'
 
-import { FC, useMemo, useState } from 'react'
+import { FC, useState } from 'react'
 
 import { ContractIds } from '@/deployments/deployments'
 import { testParasPaseo, testParasPaseoCommon } from '@polkadot/apps-config'
@@ -11,12 +11,19 @@ import { WalletIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { TxUiStatus, useHydrationSAOnAssetHub, useTransaction } from '@/hooks/useTransaction'
+import { PASEO_HYDRATION_RPC } from '@/config/get-supported-chains'
+import { useHydrationTokenAccount } from '@/hooks/useHydrationTokenAccount'
+import { TxUiStatus, useTransaction } from '@/hooks/useTransaction'
+import { hexToString } from '@/utils/string'
 
-import { AssetHubAssetList } from '../ui/assethub-asset-list'
 import ChainSelector from '../ui/chain-selector'
+import { HydrationAssetList } from '../ui/hydration-asset-list'
 
-export const SwapUsdtAndSendTxInteractions: FC = () => {
+const PASEO_POP_PARACHAIN_ID = 4001
+
+export const SwapAndSendTxInteractions: FC = () => {
+  const [assetInId, setAssetInId] = useState<number>(5)
+  const [assetOutId, setAssetOutId] = useState<number>(10)
   const [amountOut, setAmountOut] = useState<number | undefined>(0)
   const [destinationBeneficiary, setDestinationBeneficiary] = useState<string | undefined>(
     undefined,
@@ -25,19 +32,17 @@ export const SwapUsdtAndSendTxInteractions: FC = () => {
   const [selectedEndpoint, setSelectedEndpoint] = useState<EndpointOption>(testParasPaseoCommon[0])
   const { api, activeAccount } = useInkathon()
   const { contract, address: contractAddress } = useRegisteredContract(ContractIds.Swap)
-  const { handleSwapPAStoUSDT, assetHubUsdt, status } = useTransaction()
-  const hydrationSovereign = useHydrationSAOnAssetHub()
-
-  const errorMessage = useMemo(() => {
-    if (!amountOut || !hydrationSovereign.sovereignUsdt.account) return undefined
-    if (
-      hydrationSovereign.sovereignUsdt.account?.balance <
-      BigInt(amountOut * 10 ** (assetHubUsdt.metadata?.decimals || 0))
-    ) {
-      return `Hydration sovereign account on Asset Hub has insufficient balance. Please deposit more USDT to ${hydrationSovereign.address}`
-    }
-    return undefined
-  }, [hydrationSovereign, amountOut])
+  const { handleSwapAny, assetHubUsdt, status } = useTransaction()
+  const hydrationAssetInAccount = useHydrationTokenAccount(
+    PASEO_HYDRATION_RPC,
+    assetInId,
+    activeAccount?.address,
+  )
+  const hydrationAssetOutAccount = useHydrationTokenAccount(
+    PASEO_HYDRATION_RPC,
+    assetOutId,
+    activeAccount?.address,
+  )
 
   if (!api) return null
 
@@ -45,25 +50,20 @@ export const SwapUsdtAndSendTxInteractions: FC = () => {
     <>
       <div className="flex max-w-[35rem] grow flex-col gap-4">
         <h2 className="font-mono text-gray-400">
-          Swap USDT on Hydration and transfer to the destination parachain
+          Swap any token on Hydration and transfer to the destination parachain.
         </h2>
         <Card>
           <CardContent className="pt-6">
-            <h1 className="text-base font-bold">Wallet Balance</h1>
-            <AssetHubAssetList assets={[{ asset: assetHubUsdt, symbol: 'USDT on Hydration' }]} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <h1 className="text-base font-bold">Hydration Sovereign Account Balance</h1>
-            <p className="mt-3 text-gray-400">
-              The sovereign account must have sufficient balance on the destination parachain.
-            </p>
-            <AssetHubAssetList
+            <h1 className="text-base font-bold">Wallet Balance on Hydration</h1>
+            <HydrationAssetList
               assets={[
                 {
-                  asset: hydrationSovereign.sovereignUsdt,
-                  symbol: 'USDT on Asset Hub',
+                  asset: hydrationAssetInAccount,
+                  symbol: `${hexToString(hydrationAssetInAccount.details?.symbol)}`,
+                },
+                {
+                  asset: hydrationAssetOutAccount,
+                  symbol: `${hexToString(hydrationAssetOutAccount.details?.symbol)}`,
                 },
               ]}
             />
@@ -72,21 +72,44 @@ export const SwapUsdtAndSendTxInteractions: FC = () => {
         <Card>
           <CardContent className="pt-6">
             <h1 className="text-base font-bold">Swap and send to parachain</h1>
+            <br />
+            <p className="text-gray-300">
+              Ensure asset transferred to intermediary parachain is reserved with sufficient fund.
+            </p>
+            <br />
             <div className="flex flex-col gap-2">
-              <h3 className="mt-2 text-xs">Amount of PAS</h3>
+              <h3 className="mt-2 text-xs">In Asset ID</h3>
               <Input
                 type="number"
                 min={0}
-                placeholder="Enter the amount of PAS to send"
+                placeholder="Enter the input asset ID"
+                disabled={status === TxUiStatus.Submitting}
+                onChange={(e) => setAssetInId(parseInt(e.target.value))}
+                value={assetInId}
+              />
+              <h3 className="mt-2 text-xs">Amount Input</h3>
+              <Input
+                type="number"
+                min={0}
+                placeholder="Enter the amount of PAS"
                 disabled={status === TxUiStatus.Submitting}
                 value={sentPaseo}
                 onChange={(e) => setSentPaseo(parseInt(e.target.value))}
               />
-              <h3 className="mt-2 text-xs">Amount of USDT</h3>
+              <h3 className="mt-2 text-xs">Out Asset ID</h3>
               <Input
                 type="number"
                 min={0}
-                placeholder="Enter the total amount of USDT swapped"
+                placeholder="Enter the output asset ID"
+                disabled={status === TxUiStatus.Submitting}
+                onChange={(e) => setAssetOutId(parseInt(e.target.value))}
+                value={assetOutId}
+              />
+              <h3 className="mt-2 text-xs">Maximum amount out</h3>
+              <Input
+                type="number"
+                min={0}
+                placeholder="Enter the total amount of ouput asset"
                 disabled={status === TxUiStatus.Submitting}
                 onChange={(e) => setAmountOut(parseInt(e.target.value))}
                 value={amountOut}
@@ -116,29 +139,35 @@ export const SwapUsdtAndSendTxInteractions: FC = () => {
               <Button
                 type="submit"
                 onClick={() =>
-                  handleSwapPAStoUSDT(amountOut || 0, sentPaseo || 0, {
-                    type: 'ParachainAccount',
-                    /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
-                    value: [selectedEndpoint?.paraId!, destinationBeneficiary || ''],
-                  })
+                  handleSwapAny(
+                    PASEO_POP_PARACHAIN_ID,
+                    selectedEndpoint.paraId,
+                    assetInId,
+                    assetOutId,
+                    amountOut,
+                    sentPaseo,
+                    {
+                      type: 'ParachainAccount',
+                      /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
+                      value: [selectedEndpoint?.paraId!, destinationBeneficiary || ''],
+                    },
+                  )
                 }
                 className="mt-2 bg-primary font-bold"
                 disabled={
                   status === TxUiStatus.Submitting ||
-                  !amountOut ||
+                  !assetInId ||
+                  !assetOutId ||
                   !sentPaseo ||
+                  !amountOut ||
                   !selectedEndpoint ||
                   !selectedEndpoint.paraId ||
-                  !destinationBeneficiary ||
-                  !!errorMessage
+                  !destinationBeneficiary
                 }
                 isLoading={status === TxUiStatus.Submitting}
               >
                 Submit
               </Button>
-              {errorMessage && (
-                <p className="text-center font-mono text-xs text-red-400">{errorMessage}</p>
-              )}
             </div>
           </CardContent>
         </Card>

@@ -1,5 +1,6 @@
 import { address } from '@inkathon/contracts/deployments/swap/pop-network-testnet'
 import swapMetadata from '@inkathon/contracts/deployments/swap/swap.json'
+import { HydradxApi } from '@inkathon/contracts/generated-types/chains/hydradx'
 import {
   HydraSwapContractApi,
   HydraSwapXcmDepositedLocationLike,
@@ -7,13 +8,13 @@ import {
 import { DedotClient, WsProvider } from 'dedot'
 import { Contract } from 'dedot/contracts'
 import { AccountNonceApi, TaggedTransactionQueue, TransactionPaymentApi } from 'dedot/runtime-specs'
-import { RuntimeApiSpec } from 'dedot/types'
+import { RuntimeApiSpec, VersionedGenericSubstrateApi } from 'dedot/types'
 
-import { PASEO_POP_RPC } from '@/config/get-supported-chains'
+import { PASEO_HYDRATION_RPC, PASEO_POP_RPC } from '@/config/get-supported-chains'
 
-const createPopTestnetApi = async () => {
-  const provider = new WsProvider(PASEO_POP_RPC)
-  const api = await DedotClient.new<any>({
+export async function createApi<T extends VersionedGenericSubstrateApi>(wss: string) {
+  const provider = new WsProvider(wss)
+  const api = await DedotClient.new<T>({
     provider,
     cacheMetadata: true,
     runtimeApis: { ContractsApi, TaggedTransactionQueue, TransactionPaymentApi, AccountNonceApi },
@@ -45,7 +46,7 @@ export const fundParachainDirect = async (
   proofSize: number,
   sentPaseo: number,
 ) => {
-  const api = await createPopTestnetApi()
+  const api = await createApi<any>(PASEO_POP_RPC)
   api.setSigner(signer)
   const contract = new Contract<HydraSwapContractApi>(api, swapMetadata as any, address)
   return contract.tx.fundDirect(beneficiary, fromPara, toPara, hashed, {
@@ -68,7 +69,7 @@ export const fundParachainIndirect = async (
   proofSize: number,
   sentPaseo: number,
 ) => {
-  const api = await createPopTestnetApi()
+  const api = await createApi<any>(PASEO_POP_RPC)
   api.setSigner(signer)
   const contract = new Contract<HydraSwapContractApi>(api, swapMetadata as any, address)
   return contract.tx.fundIndirect(beneficiary, fromPara, intemediaryHop, toPara, hashed, {
@@ -90,13 +91,71 @@ export const swapUsdtOnHydrationTx = async (
   proofSize: number,
   sentPaseo: number,
 ) => {
-  const api = await createPopTestnetApi()
+  const api = await createApi<any>(PASEO_POP_RPC)
   api.setSigner(signer)
   const contract = new Contract<HydraSwapContractApi>(api, swapMetadata as any, address)
   return contract.tx.swapUsdtOnHydra(
     BigInt(amountOut),
     BigInt(maxAmountIn),
     BigInt(feeAmount),
+    dest,
+    {
+      gasLimit: {
+        refTime: BigInt(refTime),
+        proofSize: BigInt(proofSize),
+      },
+      value: BigInt(sentPaseo),
+    },
+  )
+}
+
+export const swapAnyOnHydrationTx = async (
+  signer: any,
+  fromPara: number,
+  intermediaryHop: number,
+  giveAssetId: number,
+  wantAssetId: number,
+  amountOut: number,
+  maxAmountIn: number,
+  feeAmount: number,
+  dest: HydraSwapXcmDepositedLocationLike,
+  refTime: number,
+  proofSize: number,
+  sentPaseo: number,
+) => {
+  const hydrationApi = await createApi<HydradxApi>(PASEO_HYDRATION_RPC)
+  const giveAsset = await hydrationApi.query.assetRegistry.assetLocations(giveAssetId)
+  const wantAsset = await hydrationApi.query.assetRegistry.assetLocations(wantAssetId)
+  if (!giveAsset || !wantAsset) throw new Error('No asset found')
+
+  const api = await createApi<any>(PASEO_POP_RPC)
+  api.setSigner(signer)
+  const contract = new Contract<HydraSwapContractApi>(api, swapMetadata as any, address)
+  return contract.tx.transferAndSwapOnHydra(
+    fromPara,
+    intermediaryHop,
+    {
+      fun: {
+        type: 'Fungible',
+        value: BigInt(maxAmountIn),
+      },
+      id: giveAsset as any,
+    },
+    {
+      fun: {
+        type: 'Fungible',
+        value: BigInt(amountOut),
+      },
+      id: wantAsset as any,
+    },
+    false,
+    {
+      fun: {
+        type: 'Fungible',
+        value: BigInt(feeAmount),
+      },
+      id: giveAsset as any,
+    },
     dest,
     {
       gasLimit: {

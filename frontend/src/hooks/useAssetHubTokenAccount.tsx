@@ -7,15 +7,17 @@ import {
 import { DedotClient, WsProvider } from 'dedot'
 import { PalletAssetsAssetAccount } from 'dedot/chaintypes'
 
-import { PASEO_ASSET_HUB_RPC } from '@/config/get-supported-chains'
-
-export const useAssetHubTokenAccount = (assetId: number, address: string | undefined) => {
+export const useAssetHubTokenAccount = (
+  wss: string,
+  assetId: number,
+  address: string | undefined,
+) => {
   const [metadata, setMeadata] = useState<PalletAssetsAssetMetadata | undefined>(undefined)
   const [account, setAccount] = useState<PalletAssetsAssetAccount | undefined>(undefined)
   useEffect(() => {
     const init = async () => {
       if (!address) return
-      const provider = new WsProvider(PASEO_ASSET_HUB_RPC)
+      const provider = new WsProvider(wss)
       const client = await DedotClient.create<AssetHubPaseoApi>({
         provider,
       })

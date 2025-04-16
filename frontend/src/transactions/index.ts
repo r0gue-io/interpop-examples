@@ -7,8 +7,7 @@ import {
 } from '@inkathon/contracts/generated-types/hydra-swap'
 import { DedotClient, WsProvider } from 'dedot'
 import { Contract } from 'dedot/contracts'
-import { AccountNonceApi, TaggedTransactionQueue, TransactionPaymentApi } from 'dedot/runtime-specs'
-import { RuntimeApiSpec, VersionedGenericSubstrateApi } from 'dedot/types'
+import { VersionedGenericSubstrateApi } from 'dedot/types'
 
 import { PASEO_HYDRATION_RPC, PASEO_POP_RPC } from '@/config/get-supported-chains'
 
@@ -17,24 +16,9 @@ export async function createApi<T extends VersionedGenericSubstrateApi>(wss: str
   const api = await DedotClient.new<T>({
     provider,
     cacheMetadata: true,
-    runtimeApis: { ContractsApi, TaggedTransactionQueue, TransactionPaymentApi, AccountNonceApi },
   })
   return api
 }
-
-export const ContractsApi: RuntimeApiSpec[] = [
-  {
-    methods: {
-      call: {
-        docs: 'Perform a call from a specified account to a given contract.',
-        params: [],
-        type: 'ContractResult',
-        codec: undefined,
-      },
-    },
-    version: 2,
-  },
-]
 
 export const fundParachainDirect = async (
   signer: any,
